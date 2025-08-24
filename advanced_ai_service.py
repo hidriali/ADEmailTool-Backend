@@ -320,17 +320,25 @@ def create_emails_table():
         except:
             pass
 
-def fetch_gmail_emails(max_results=10):
-    """Fetch emails from Gmail API"""
+def fetch_gmail_emails(max_results=50):
+    """Fetch emails from Gmail API - only from today onwards"""
     if not gmail_service:
         logger.error("❌ Gmail service not available")
         return []
     
     try:
-        # Get list of messages
+        # Get today's date in RFC 3339 format
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        
+        # Query for emails from today onwards
+        query = f"after:{today}"
+        
+        # Get list of messages from today onwards
         results = gmail_service.users().messages().list(
             userId='me', 
-            maxResults=max_results
+            maxResults=max_results,
+            q=query  # This filters emails from today onwards
         ).execute()
         
         messages = results.get('messages', [])
@@ -348,7 +356,7 @@ def fetch_gmail_emails(max_results=10):
             if email_data:
                 emails.append(email_data)
         
-        logger.info(f"✅ Fetched {len(emails)} emails from Gmail")
+        logger.info(f"✅ Fetched {len(emails)} emails from Gmail (from {today} onwards)")
         return emails
         
     except Exception as e:
