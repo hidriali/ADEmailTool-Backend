@@ -235,7 +235,7 @@ def format_as_email(content: str, tone: str = "professional") -> str:
     return f"{greeting}\n\n{content}\n\n{closing}"
 
 def setup_gmail_service():
-    """Set up Gmail API service"""
+    """Set up Gmail API service using environment variables"""
     global gmail_service
     
     if not GMAIL_AVAILABLE:
@@ -243,30 +243,37 @@ def setup_gmail_service():
         return
     
     try:
-        creds = None
+        # Get credentials from environment variables
+        client_id = os.environ.get('GMAIL_CLIENT_ID')
+        client_secret = os.environ.get('GMAIL_CLIENT_SECRET')
+        access_token = os.environ.get('GMAIL_ACCESS_TOKEN')
+        refresh_token = os.environ.get('GMAIL_REFRESH_TOKEN')
         
-        # Load existing token
-        if os.path.exists(TOKEN_FILE):
-            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+        if not all([client_id, client_secret, access_token, refresh_token]):
+            logger.error("❌ Gmail environment variables not found")
+            return
         
-        # If no valid credentials, get new ones
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
+        # Create credentials from environment variables
+        creds = Credentials(
+            token=access_token,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=SCOPES
+        )
+        
+        # Refresh token if needed
+        if creds.expired:
+            try:
                 creds.refresh(Request())
-            else:
-                if not os.path.exists(CREDENTIALS_FILE):
-                    logger.error("❌ Gmail credentials.json not found")
-                    return
-                    
-                flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
-                creds = flow.run_local_server(port=0)
-            
-            # Save credentials for next run
-            with open(TOKEN_FILE, 'w') as token:
-                token.write(creds.to_json())
+                logger.info("✅ Gmail token refreshed successfully")
+            except Exception as e:
+                logger.error(f"❌ Failed to refresh Gmail token: {e}")
+                return
         
         gmail_service = build('gmail', 'v1', credentials=creds)
-        logger.info("✅ Gmail API service initialized")
+        logger.info("✅ Gmail API service initialized from environment variables")
         
     except Exception as e:
         logger.error(f"❌ Failed to setup Gmail service: {e}")
@@ -320,25 +327,17 @@ def create_emails_table():
         except:
             pass
 
-def fetch_gmail_emails(max_results=50):
-    """Fetch emails from Gmail API - only from today onwards"""
+def fetch_gmail_emails(max_results=10):
+    """Fetch emails from Gmail API"""
     if not gmail_service:
         logger.error("❌ Gmail service not available")
         return []
     
     try:
-        # Get today's date in RFC 3339 format
-        from datetime import datetime, timezone
-        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        
-        # Query for emails from today onwards
-        query = f"after:{today}"
-        
-        # Get list of messages from today onwards
+        # Get list of messages
         results = gmail_service.users().messages().list(
             userId='me', 
-            maxResults=max_results,
-            q=query  # This filters emails from today onwards
+            maxResults=max_results
         ).execute()
         
         messages = results.get('messages', [])
@@ -356,7 +355,7 @@ def fetch_gmail_emails(max_results=50):
             if email_data:
                 emails.append(email_data)
         
-        logger.info(f"✅ Fetched {len(emails)} emails from Gmail (from {today} onwards)")
+        logger.info(f"✅ Fetched {len(emails)} emails from Gmail")
         return emails
         
     except Exception as e:
