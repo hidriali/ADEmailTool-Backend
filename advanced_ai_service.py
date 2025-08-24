@@ -997,8 +997,12 @@ if __name__ == "__main__":
     print("🤖 Using TINY AI models for real AI functionality!")
     print("📊 DistilGPT2 (82MB) + DistilBART (142MB) = ~250MB total")
     print("💻 Laptop-friendly with real AI capabilities!")
-    print("📍 Service will be available at: http://localhost:5001")
-    print("📖 API Documentation: http://localhost:5001/docs")
+    
+    # Get port from environment variable (for Railway) or default to 5001
+    port = int(os.environ.get("PORT", 5001))
+    
+    print(f"📍 Service will be available at: http://localhost:{port}")
+    print(f"📖 API Documentation: http://localhost:{port}/docs")
     print()
     print("💡 This uses REAL AI models, just tiny ones!")
     print("✅ Classification: Your separate classifier")
@@ -1007,6 +1011,6 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=5001,
+        port=port,
         log_level="info"
     )
