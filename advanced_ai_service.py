@@ -1048,10 +1048,22 @@ async def health_check():
 @app.get("/test")
 async def test_endpoint():
     """Simple test endpoint for debugging"""
+    # Check environment variables
+    client_id = os.environ.get('GMAIL_CLIENT_ID')
+    client_secret = os.environ.get('GMAIL_CLIENT_SECRET')
+    access_token = os.environ.get('GMAIL_ACCESS_TOKEN')
+    refresh_token = os.environ.get('GMAIL_REFRESH_TOKEN')
+    
     return {
         "status": "working",
         "ai_available": AI_AVAILABLE,
         "gmail_available": GMAIL_AVAILABLE,
+        "environment_variables": {
+            "GMAIL_CLIENT_ID": "✅ Found" if client_id else "❌ Missing",
+            "GMAIL_CLIENT_SECRET": "✅ Found" if client_secret else "❌ Missing", 
+            "GMAIL_ACCESS_TOKEN": "✅ Found" if access_token else "❌ Missing",
+            "GMAIL_REFRESH_TOKEN": "✅ Found" if refresh_token else "❌ Missing"
+        },
         "models_loaded": {
             "text_generator": text_generator is not None if AI_AVAILABLE else False,
             "grammar_fixer": grammar_fixer is not None if AI_AVAILABLE else False,
