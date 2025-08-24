@@ -248,6 +248,14 @@ def setup_gmail_service():
         client_secret = os.environ.get('GMAIL_CLIENT_SECRET')
         access_token = os.environ.get('GMAIL_ACCESS_TOKEN')
         refresh_token = os.environ.get('GMAIL_REFRESH_TOKEN')
+
+        
+        # Debug logging
+        logger.info(f"🔍 Environment variables check:")
+        logger.info(f"   GMAIL_CLIENT_ID: {'✅ Found' if client_id else '❌ Missing'}")
+        logger.info(f"   GMAIL_CLIENT_SECRET: {'✅ Found' if client_secret else '❌ Missing'}")
+        logger.info(f"   GMAIL_ACCESS_TOKEN: {'✅ Found' if access_token else '❌ Missing'}")
+        logger.info(f"   GMAIL_REFRESH_TOKEN: {'✅ Found' if refresh_token else '❌ Missing'}")
         
         if not all([client_id, client_secret, access_token, refresh_token]):
             logger.error("❌ Gmail environment variables not found")
