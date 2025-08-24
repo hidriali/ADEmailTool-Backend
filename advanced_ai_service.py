@@ -248,7 +248,6 @@ def setup_gmail_service():
         client_secret = os.environ.get('GMAIL_CLIENT_SECRET')
         access_token = os.environ.get('GMAIL_ACCESS_TOKEN')
         refresh_token = os.environ.get('GMAIL_REFRESH_TOKEN')
-
         
         # Debug logging
         logger.info(f"🔍 Environment variables check:")
@@ -587,6 +586,10 @@ async def startup_event():
 @app.get("/")
 async def root():
     """Health check endpoint"""
+    # Test environment variables
+    all_env_vars = dict(os.environ)
+    gmail_vars = {k: v for k, v in all_env_vars.items() if 'GMAIL' in k}
+    
     return {
         "service": "EmailTool AI Service (Lightweight)",
         "version": "3.0.0",
@@ -600,7 +603,12 @@ async def root():
         },
         "laptop_friendly": True,
         "real_ai": True,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "environment_debug": {
+            "total_env_vars": len(all_env_vars),
+            "gmail_vars_found": len(gmail_vars),
+            "gmail_vars": gmail_vars
+        }
     }
 
 @app.get("/health")
