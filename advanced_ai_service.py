@@ -38,7 +38,7 @@ try:
     logging.basicConfig(level=logging.INFO)
 except ImportError:
     AI_AVAILABLE = False
-    print("⚠️  transformers not available - install with: pip install transformers torch")
+    print("⚠️  transformers not available - using fallback mode")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -969,16 +969,41 @@ def generate_fallback_email(prompt: str, tone: str = "professional") -> str:
     
     return format_as_email(content, tone)
 
+@app.get("/")
+async def root():
+    """Root endpoint for health check"""
+    return {
+        "status": "ADEmailTool Backend is running!",
+        "version": "3.0.0",
+        "ai_available": AI_AVAILABLE,
+        "gmail_available": GMAIL_AVAILABLE,
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/health",
+            "test": "/test"
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "ADEmailTool Backend"
+    }
+
 @app.get("/test")
 async def test_endpoint():
     """Simple test endpoint for debugging"""
     return {
         "status": "working",
         "ai_available": AI_AVAILABLE,
+        "gmail_available": GMAIL_AVAILABLE,
         "models_loaded": {
-            "text_generator": text_generator is not None,
-            "grammar_fixer": grammar_fixer is not None,
-            "summarizer": summarizer is not None
+            "text_generator": text_generator is not None if AI_AVAILABLE else False,
+            "grammar_fixer": grammar_fixer is not None if AI_AVAILABLE else False,
+            "summarizer": summarizer is not None if AI_AVAILABLE else False
         }
     }
 
